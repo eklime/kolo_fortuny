@@ -181,7 +181,7 @@ class WheelOfFortune:
 
         self.phrase_var = tk.StringVar()
         self.update_phrase_display()
-        self.phrase_label = tk.Label(self.game_frame, textvariable=self.phrase_var, font=('Arial', 18))
+        self.phrase_label = tk.Label(self.game_frame, textvariable=self.phrase_var, font=('Arial', 24))
         self.phrase_label.pack(pady=10)
 
         self.info_var = tk.StringVar()
@@ -256,7 +256,11 @@ class WheelOfFortune:
             return
 
         if letter in self.guessed:
-            self.result_var.set("Litera już była.")
+            self.result_var.set("Litera już była. Tracisz kolejkę.")
+            self.has_spun = False
+            self.guess_button.config(state="disabled")
+            self.full_guess_button.config(state="disabled")
+            self.next_player()
             return
 
         if letter in VOWELS:
@@ -271,6 +275,14 @@ class WheelOfFortune:
                 gained = self.spin_result * count
                 self.scores[self.current_player] += gained
             self.result_var.set(f"Litera {letter} występuje {count} raz(y).")
+            
+            # Check if all consonants have been guessed after adding this letter
+            if not letter in VOWELS and self.all_consonants_guessed():
+                original_color = self.root.cget("bg")
+                self.root.config(bg="yellow")
+                self.result_var.set("Brak spółgłosek!")
+                self.root.update()
+                self.root.after(2000, lambda: self.root.config(bg=original_color))
         else:
             self.result_var.set(f"Litera {letter} nie występuje.")
             self.has_spun = False
@@ -290,6 +302,13 @@ class WheelOfFortune:
             self.update_phrase_display()
             self.result_var.set(f"🎆 {self.players[self.current_player]} odgadł hasło i wygrywa! 🎆")
             self.end_game()
+
+    def all_consonants_guessed(self):
+        """Check if all consonants in the phrase have been guessed."""
+        for char in self.phrase.upper():
+            if char.isalpha() and char not in VOWELS and char not in self.guessed:
+                return False
+        return True
 
     def guess_full_phrase(self):
         if not self.has_spun:
